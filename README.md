@@ -4,7 +4,7 @@ Welcome friends,
 
 For the first assignment we'll just get to know the codebase a little bit and practice manipulating images, transforming things, breaking stuff, it should be fun!
 
-## Image basics ##
+## LoadImage basics ##
 
 We have a pretty basic datastructure to store images in our library. The `image` struct stores the image metadata like width, height, and number of channels. It also contains the image data stored as a floating point array. You can check it out in `src/image.h`, it looks like this:
 
@@ -51,7 +51,7 @@ The most basic operation we want to do is change the pixels in an image. As we t
 
 The convention is that the coordinate system starts at the top left of the image, like so:
 
-![Image coordinate system](figs/coords.png)
+![LoadImage coordinate system](figs/coords.png)
 
 In our `data` array we store the image in `CHW` format. The first pixel in data is at channel 0, row 0, column 0. The next pixel is channel 0, row 0, column 1, then channel 0, row 0, column 2, etc.
 
@@ -62,7 +62,7 @@ Your first task is to fill out these two functions in `src/process_image.c`:
 
 `get_pixel` should return the pixel value at column `x`, row `y`, and channel `c`. `set_pixel` should set the pixel to the value `v`. You will need to do bounds checking to make sure the coordinates are valid for the image. `set_pixel` should simply return without doing anything if you pass in invalid coordinates. For `get_pixel` we will perform padding to the image. There are a number of possible padding strategies:
 
-![Image padding strategies](figs/pad.png)
+![LoadImage padding strategies](figs/pad.png)
 
 We will use the `clamp` padding strategy. This means that if the programmer asks for a pixel at column -3, use column 0, or if they ask for column 300 and the image is only 256x256 you will use column 255 (because of zero-based indexing).
 
@@ -125,7 +125,7 @@ Now let's write a function to add a constant factor to a channel in an image. We
 
 Fill in the code for `void shift_image(image im, int c, float v);`. It should add `v` to every pixel in channel `c` in the image. Now we can try shifting all the channels in an image by `.4` or 40%. See lines 15-20 in `tryit.py`:
 
-    # 4. Shift Image
+    # 4. Shift LoadImage
     im = load_image("data/dog.jpg")
     shift_image(im, 0, .4)
     shift_image(im, 1, .4)
@@ -144,7 +144,7 @@ We represent our images using floating point values between 0 and 1. However, we
 
 We want to make sure the pixel values in the image stay between 0 and 1. Implement clamping on the image so that any value below zero gets set to zero and any value above 1 gets set to one. Fill in `void clamp_image(image im);` to modify the image in-place. Then when we clamp the shifted image and save it we see much better results, see lines 22-24 in `tryit.py`:
 
-    # 5. Clamp Image
+    # 5. Clamp LoadImage
     clamp_image(im)
     save_image(im, "fixed")
 
