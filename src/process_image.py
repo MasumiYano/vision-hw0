@@ -1,18 +1,27 @@
 import numpy as np
 
 
-def get_pixel(im, x, y, c):
-    # TODO Fill this in
-    return 0
+def get_pixel(im, col, row, channel):
+    height, width = im['data'].shape[0], im['data'].shape[1]
+    selected_col = 0
+    selected_row = 0
+    if col > height:
+        selected_col = height
+    elif row > width:
+        selected_row = width
+    else:
+        selected_col = col
+        selected_row = row
+    return im['data'][selected_row, selected_col][channel]
 
 
-def set_pixel(im, x, y, c, v):
-    # TODO Fill this in
-    pass
+def set_pixel(im, col, row, channel, value):
+    existing_value = get_pixel(im, col, row, channel)
+    existing_value = value
 
 
-def make_image(w, h, c):
-    return {'data': np.zeros((h, w, c), dtype=np.float32), 'w': w, 'h': h, 'c': c}
+def make_image(width, height, channel):
+    return {'data': np.zeros((height, width, channel), dtype=np.float32), 'w': width, 'h': height, 'c': channel}
 
 
 def copy_image(im):
