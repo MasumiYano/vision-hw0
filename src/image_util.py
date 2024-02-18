@@ -32,6 +32,7 @@ def load_image_stb(filename, channels=0):
             img = img.convert('L')
         elif channels == 3:
             img = img.convert('RGB')
+            print(img)
         else:  # channels == 4 for RGBA
             img = img.convert('RGBA')
     else:
@@ -42,7 +43,7 @@ def load_image_stb(filename, channels=0):
     if channels and c == 4 and channels != 4:  # Removing alpha channel if not needed
         data = data[:, :, :3]
         c = 3
-    return {'data': data, 'h': h, 'w': w, 'c': c}
+    return {'data': data, 'w': w, 'h': h, 'c': c}
 
 
 def load_image(filename):
