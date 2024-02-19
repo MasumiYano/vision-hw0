@@ -9,7 +9,10 @@ def get_pixel(im, x, y, c):
 
 
 def set_pixel(im, x, y, c, v):
-    im['data'][y, x][c] = v
+    height, width = im['data'].shape[0], im['data'].shape[1]
+    select_x = max(0, min(x, width - 1))
+    select_y = max(0, min(y, height - 1))
+    im['data'][select_y, select_x][c] = v
 
 
 def make_image(width, height, channel):
