@@ -3,65 +3,73 @@ import numpy as np
 from src import process_image
 
 
-def nn_interpolate(im, x, y, c):
-    return
+def nn_interpolate(im, x: float, y: float, c: list[int]) -> tuple:
+    round_up_x = math.ceil(x)
+    round_up_y = math.ceil(y)
+    r = process_image.get_pixel(im, round_up_x, round_up_y, c[0])
+    g = process_image.get_pixel(im, round_up_x, round_up_y, c[1])
+    b = process_image.get_pixel(im, round_up_x, round_up_y, c[2])
+    return r, g, b
 
 
-def nn_resize(im, w, h):
-    channel = im['c']
-    new_im = process_image.make_image(w, h, channel)
-    r_value = im['data'][:, :, 0]
-    g_value = im['data'][:, :, 1]
-    b_value = im['data'][:, :, 2]
+def nn_resize(im, w: int, h: int):
+    width_old, height_old, c = im['w'], im['h'], im['c']
+    new_im = process_image.make_image(w, h, c)
+    coefficient_matrix = np.array([[-0.5, 1], [w-0.5, 1]])
+    constants_matrix = np.array([-0.5, width_old-0.5])
+    a, b = np.linalg.solve(coefficient_matrix, constants_matrix)
+    for y in range(new_im['h']):
+        for x in range(new_im['w']):
+            x_mapped = a * x - b
+            y_mapped = a * y - b
+            r, g, b = nn_interpolate(im, x_mapped, y_mapped, [0, 1, 2])
+            process_image.set_pixel(new_im, x, y, 0, r)
+            process_image.set_pixel(new_im, x, y, 1, g)
+            process_image.set_pixel(new_im, x, y, 2, b)
     return new_im
 
 
 def bilinear_interpolate(im, x: float, y: float, c: list[int]) -> tuple:
-    distance_btm = abs(1 - y)
-    distance_top = abs(1 - distance_btm)
-    distance_right = abs(1 - x)
-    distance_left = x
-    # Q1
-    r_top_q1 = process_image.get_pixel(im, math.floor(x), math.floor(y), c[0])
-    g_top_q1 = process_image.get_pixel(im, math.floor(x), math.floor(y), c[1])
-    b_top_q1 = process_image.get_pixel(im, math.floor(x), math.floor(y), c[2])
-    r_btm_q1 = process_image.get_pixel(im, math.floor(x), math.ceil(y), c[0])
-    g_btm_q1 = process_image.get_pixel(im, math.floor(x), math.ceil(y), c[1])
-    b_btm_q1 = process_image.get_pixel(im, math.floor(x), math.ceil(y), c[2])
-    r1 = (distance_btm * r_top_q1) + (distance_top * r_btm_q1)
-    g1 = (distance_btm * g_top_q1) + (distance_top * g_btm_q1)
-    b1 = (distance_btm * b_top_q1) + (distance_top * b_btm_q1)
+    dist_l = x % 1  # To get decimal
+    dist_r = 1 - dist_l
+    dist_top = y % 1  # To get decimal
+    dist_btm = 1 - dist_top
 
-    # Q2
-    r_top_q2 = process_image.get_pixel(im, math.ceil(x), math.floor(y), c[0])
-    g_top_q2 = process_image.get_pixel(im, math.ceil(x), math.floor(y), c[1])
-    b_top_q2 = process_image.get_pixel(im, math.ceil(x), math.floor(y), c[2])
-    r_btm_q2 = process_image.get_pixel(im, math.ceil(x), math.ceil(y), c[0])
-    g_btm_q2 = process_image.get_pixel(im, math.ceil(x), math.ceil(y), c[1])
-    b_btm_q2 = process_image.get_pixel(im, math.ceil(x), math.ceil(y), c[2])
-    r2 = (distance_btm * r_top_q2) + (distance_top * r_btm_q2)
-    g2 = (distance_btm * g_top_q2) + (distance_top * g_btm_q2)
-    b2 = (distance_btm * b_top_q2) + (distance_top * b_btm_q2)
+    # Calculating q1
+    r1 = (dist_btm * process_image.get_pixel(im, math.floor(x), math.floor(y), c[0])) + (
+            dist_top * process_image.get_pixel(im, math.floor(x), math.ceil(y), c[0]))
+    g1 = (dist_btm * process_image.get_pixel(im, math.floor(x), math.floor(y), c[1])) + (
+            dist_top * process_image.get_pixel(im, math.floor(x), math.ceil(y), c[1]))
+    b1 = (dist_btm * process_image.get_pixel(im, math.floor(x), math.floor(y), c[2])) + (
+            dist_top * process_image.get_pixel(im, math.floor(x), math.ceil(y), c[2]))
 
-    # Q
-    r = (r1*distance_right) + (r2*distance_left)
-    g = (g1*distance_right) + (g2*distance_left)
-    b = (b1*distance_right) + (b2*distance_left)
+    # Calculating q2
+    r2 = (dist_btm * process_image.get_pixel(im, math.ceil(x), math.floor(y), c[0])) + (
+            dist_top * process_image.get_pixel(im, math.ceil(x), math.ceil(y), c[0]))
+    g2 = (dist_btm * process_image.get_pixel(im, math.ceil(x), math.floor(y), c[1])) + (
+            dist_top * process_image.get_pixel(im, math.ceil(x), math.ceil(y), c[1]))
+    b2 = (dist_btm * process_image.get_pixel(im, math.ceil(x), math.floor(y), c[2])) + (
+            dist_top * process_image.get_pixel(im, math.ceil(x), math.ceil(y), c[2]))
+
+    # Calculating q
+    r = (dist_r * r1) + (dist_l * r2)
+    g = (dist_r * g1) + (dist_l * g2)
+    b = (dist_r * b1) + (dist_l * b2)
     return r, g, b
 
 
 def bilinear_resize(im, w: int, h: int) -> np.array:
     width_old, height_old, c = im['w'], im['h'], im['c']
     new_im = process_image.make_image(w, h, c)
-    coefficient_matrix = np.array([[-0.5, 1], [w - 0.5, 1]])
-    constants_matrix = np.array([-0.5, width_old - 0.5])
+    coefficient_matrix = np.array([[-0.5, 1], [w-0.5, 1]])
+    constants_matrix = np.array([-0.5, width_old-0.5])
     a, b = np.linalg.solve(coefficient_matrix, constants_matrix)
-    for y in range(h):
-        for x in range(w):
-            old_x = a * x - b
-            old_y = a * y - b
-            q = bilinear_interpolate(im, old_x, old_y, [0, 1, 2])
-            new_im['data'][y, x][0] = q[0]
-            new_im['data'][y, x][1] = q[1]
-            new_im['data'][y, x][2] = q[2]
+    for y in range(new_im['h']):
+        for x in range(new_im['w']):
+            x_mapped = a * x - b
+            y_mapped = a * y - b
+            r, g, b = bilinear_interpolate(im, x_mapped, y_mapped, [0, 1, 2])
+            process_image.set_pixel(new_im, x, y, 0, r)
+            process_image.set_pixel(new_im, x, y, 1, g)
+            process_image.set_pixel(new_im, x, y, 2, b)
     return new_im

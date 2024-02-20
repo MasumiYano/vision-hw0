@@ -2,7 +2,7 @@ import numpy as np
 from process_image import make_image
 
 
-def lw_normalize(im):
+def l1_normalize(im):
     # TODO: Fill this in
     pass
 
