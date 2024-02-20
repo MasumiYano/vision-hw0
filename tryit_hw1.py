@@ -1,4 +1,4 @@
-from src import image_util, resize_image, args
+from src import image_util, resize_image, filter_image
 
 ################################ IMAGE RESIZING ################################
 # Enlarge
@@ -18,3 +18,7 @@ from src import image_util, resize_image, args
 # image_util.save_image(c, 'dog7th-bl')
 
 ################################ IMAGE FILTERING WITH CONVOLUTIONS ################################
+im = image_util.load_image('data/dog.jpg')
+f = filter_image.make_box_filter(7)
+blur = filter_image.convolve_image(im, f, 1)
+image_util.save_image(blur, "dog-box7")

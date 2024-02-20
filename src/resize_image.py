@@ -3,7 +3,7 @@ import numpy as np
 from src import process_image
 
 
-def nn_interpolate(im, x: float, y: float, c: list[int]) -> tuple:
+def nn_interpolate(im, x: float, y: float, c: list[int]):
     round_up_x = math.ceil(x)
     round_up_y = math.ceil(y)
     r = process_image.get_pixel(im, round_up_x, round_up_y, c[0])
@@ -29,7 +29,7 @@ def nn_resize(im, w: int, h: int):
     return new_im
 
 
-def bilinear_interpolate(im, x: float, y: float, c: list[int]) -> tuple:
+def bilinear_interpolate(im, x: float, y: float, c: list[int]):
     dist_l = x % 1  # To get decimal
     dist_r = 1 - dist_l
     dist_top = y % 1  # To get decimal
@@ -58,7 +58,7 @@ def bilinear_interpolate(im, x: float, y: float, c: list[int]) -> tuple:
     return r, g, b
 
 
-def bilinear_resize(im, w: int, h: int) -> np.array:
+def bilinear_resize(im, w: int, h: int):
     width_old, height_old, c = im['w'], im['h'], im['c']
     new_im = process_image.make_image(w, h, c)
     coefficient_matrix = np.array([[-0.5, 1], [w-0.5, 1]])
