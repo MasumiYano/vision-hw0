@@ -19,6 +19,38 @@ from src import image_util, resize_image, filter_image
 
 ################################ IMAGE FILTERING WITH CONVOLUTIONS ################################
 im = image_util.load_image('data/dog.jpg')
-f = filter_image.make_box_filter(7)
-blur = filter_image.convolve_image(im, f, 1)
-image_util.save_image(blur, "dog-box7")
+# f = filter_image.make_box_filter(7)
+# blur = filter_image.convolve_image(im, f, 1)
+# image_util.save_image(blur, "dog-box7")
+
+# thumb = resize_image.nn_resize(blur, blur['w']//7, blur['h']//7)
+# image_util.save_image(thumb, 'dog_thumb')
+
+# highpass = filter_image.make_highpass_filter()
+# highpass_img = filter_image.convolve_image(im, highpass, 0)
+# image_util.save_image(highpass_img, "highpass_dog")
+
+# sharpen = filter_image.make_sharpen_filter()
+# sharpen_img = filter_image.convolve_image(im, sharpen, 1)
+# image_util.save_image(sharpen_img, 'sharpen_dog')
+
+# emboss = filter_image.make_emboss_filter()
+# emboss_img = filter_image.convolve_image(im, emboss, 1)
+# image_util.save_image(emboss_img, 'emboss_dog')
+
+# gaussian = filter_image.make_gaussian_filter(2)
+# blur_gaussian = filter_image.convolve_image(im, gaussian, 1)
+# image_util.save_image(blur_gaussian, 'dog-gaussian2')
+
+# lfreq = filter_image.convolve_image(im, gaussian, 1)
+# hfreq = filter_image.sub_image(im, lfreq)
+# reconstruct = filter_image.add_image(lfreq, hfreq)
+# image_util.save_image(lfreq, 'low-frequency')
+# image_util.save_image(hfreq, 'high-frequency')
+# image_util.save_image(reconstruct, 'reconstruct')
+
+# color_bar = image_util.load_image('data/colorbar.png')
+res = filter_image.sobel_image(im)
+mag = res[0]
+filter_image.feature_normalize(mag)
+image_util.save_image(mag, 'magnitude')

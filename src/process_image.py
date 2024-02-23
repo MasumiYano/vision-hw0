@@ -1,8 +1,9 @@
+import numpy
 import numpy as np
 
 
 def get_pixel(im, x, y, c):
-    height, width = im['data'].shape[0], im['data'].shape[1]
+    height, width = im['h'], im['w']
     select_x = max(0, min(x, width - 1))
     select_y = max(0, min(y, height - 1))
     if c == 0:
