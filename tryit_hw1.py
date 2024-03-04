@@ -31,6 +31,8 @@ im = image_util.load_image('data/dog.jpg')
 # image_util.save_image(highpass_img, "highpass_dog")
 
 # sharpen = filter_image.make_sharpen_filter()
+# print(f"Image channel: {im['c']}")
+# print(f"Filter channel: {sharpen['c']}")
 # sharpen_img = filter_image.convolve_image(im, sharpen, 1)
 # image_util.save_image(sharpen_img, 'sharpen_dog')
 
@@ -38,19 +40,7 @@ im = image_util.load_image('data/dog.jpg')
 # emboss_img = filter_image.convolve_image(im, emboss, 1)
 # image_util.save_image(emboss_img, 'emboss_dog')
 
-# gaussian = filter_image.make_gaussian_filter(2)
-# blur_gaussian = filter_image.convolve_image(im, gaussian, 1)
-# image_util.save_image(blur_gaussian, 'dog-gaussian2')
+gaussian = filter_image.make_gaussian_filter(2)
+blur_gaussian = filter_image.convolve_image(im, gaussian, 1)
+image_util.save_image(blur_gaussian, 'dog-gaussian2')
 
-# lfreq = filter_image.convolve_image(im, gaussian, 1)
-# hfreq = filter_image.sub_image(im, lfreq)
-# reconstruct = filter_image.add_image(lfreq, hfreq)
-# image_util.save_image(lfreq, 'low-frequency')
-# image_util.save_image(hfreq, 'high-frequency')
-# image_util.save_image(reconstruct, 'reconstruct')
-
-# color_bar = image_util.load_image('data/colorbar.png')
-res = filter_image.sobel_image(im)
-mag = res[0]
-filter_image.feature_normalize(mag)
-image_util.save_image(mag, 'magnitude')

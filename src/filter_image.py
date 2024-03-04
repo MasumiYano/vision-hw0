@@ -4,33 +4,22 @@ import numpy as np
 from src import process_image, resize_image
 
 
-def l1_normalize(im):
-    if im['c'] != 1:
-        total_sum_r, total_sum_g, total_sum_b = 0, 0, 0
-        for y in range(im['h']):
-            for x in range(im['w']):
-                total_sum_r += process_image.get_pixel(im, x, y, 0)
-                total_sum_g += process_image.get_pixel(im, x, y, 1)
-                total_sum_b += process_image.get_pixel(im, x, y, 2)
+def l1_normalize(image):
+    data = image['data']
+    num_channels = image['c']
 
-        for y in range(im['h']):
-            for x in range(im['w']):
-                r = process_image.get_pixel(im, x, y, 0)
-                process_image.set_pixel(im, x, y, 0, r / total_sum_r)
-                g = process_image.get_pixel(im, x, y, 1)
-                process_image.set_pixel(im, x, y, 1, g / total_sum_g)
-                b = process_image.get_pixel(im, x, y, 2)
-                process_image.set_pixel(im, x, y, 2, b / total_sum_b)
+    # Normalize differently based on the number of channels
+    if num_channels == 1:
+        # For single-channel images
+        norm_factor = np.sum(np.abs(data))
+        if norm_factor != 0:
+            data /= norm_factor
     else:
-        total_sum = 0
-        for y in range(im['h']):
-            for x in range(im['w']):
-                total_sum += process_image.get_pixel(im, x, y, 0)
-
-        for y in range(im['h']):
-            for x in range(im['w']):
-                value = process_image.get_pixel(im, x, y, 0) / total_sum
-                process_image.set_pixel(im, x, y, 0, value)
+        # For multi-channel images
+        norm_factor = np.sum(np.abs(data), axis=(0, 1), keepdims=True)
+        # Avoid division by zero
+        norm_factor[norm_factor == 0] = 1
+        data /= norm_factor
 
 
 def make_box_filter(w):
@@ -44,6 +33,9 @@ def make_box_filter(w):
 
 
 def convolve_image(im, inc_filter, preserve):
+    assert (inc_filter['c'] == im['c']) or (
+            inc_filter['c'] == 1), "Filter must have the same number of channels of image or be single-channel."
+
     kernel_center_x = inc_filter['w'] // 2
     kernel_center_y = inc_filter['h'] // 2
 
@@ -56,7 +48,10 @@ def convolve_image(im, inc_filter, preserve):
     elif preserve == 1 and inc_filter['c'] > 1:
         preserve_conv(im, new_img, inc_filter, kernel_center_y, kernel_center_x)
     elif inc_filter['c'] == 1 and im['c'] >= 1:
-        each_conv(im, new_img, inc_filter, kernel_center_y, kernel_center_x, preserve)
+        if preserve:
+            preserve_conv(im, new_img, inc_filter, kernel_center_y, kernel_center_x)
+        else:
+            normal_conv(im, new_img, inc_filter, kernel_center_y, kernel_center_x)
     return new_img
 
 
@@ -84,43 +79,15 @@ def preserve_conv(im, new_img, inc_filter, kernel_y, kernel_x):
                     for x_filter in range(inc_filter['w']):
                         image_y = y + y_filter - kernel_y
                         image_x = x + x_filter - kernel_x
-                        value_img = process_image.get_pixel(im, image_y, image_x, c)
-                        value_kernel = process_image.get_pixel(inc_filter, y_filter, x_filter, c)
+                        value_img = process_image.get_pixel(im, image_x, image_y, c)
+                        value_kernel = process_image.get_pixel(inc_filter, x_filter, y_filter, c)
                         q += value_img * value_kernel
                 process_image.set_pixel(new_img, x, y, c, q)
-
-
-def each_conv(im, new_img, inc_filter, kernel_y, kernel_x, preserve):
-    for y in range(im['h']):
-        for x in range(im['w']):
-            if preserve:
-                for c in range(im['c']):
-                    q = 0
-                    for y_filter in range(inc_filter['h']):
-                        for x_filter in range(inc_filter['w']):
-                            image_y = y + y_filter - kernel_y
-                            image_x = x + x_filter - kernel_x
-                            value_img = process_image.get_pixel(im, image_x, image_y, c)
-                            value_kernel = process_image.get_pixel(inc_filter, x_filter, y_filter, 0)
-                            q += value_img * value_kernel
-                    process_image.set_pixel(new_img, x, y, c, q)
-            else:
-                q = 0
-                for y_filter in range(inc_filter['h']):
-                    for x_filter in range(inc_filter['w']):
-                        image_y = y + y_filter - kernel_y
-                        image_x = x + x_filter - kernel_x
-                        sub_img_value = process_image.get_pixel(im, image_x, image_y, 0)
-                        sum_sub = sum(sub_img_value)
-                        value_kernel = process_image.get_pixel(inc_filter, x_filter, y_filter, 0)
-                        q += sum_sub * value_kernel
-                process_image.set_pixel(new_img, x, y, 0, q)
 
 
 def make_highpass_filter():
     highpass_filter = process_image.make_image(3, 3, 1)
     highpass_filter['data'] = np.array([[0, -1, 0], [-1, 4, -1], [0, -1, 0]], dtype=np.float32)
-    l1_normalize(highpass_filter)
     return highpass_filter
 
 
@@ -220,72 +187,43 @@ def _check_size(im_a, im_b):
         resize_image.bilinear_resize(im_b, im_a['w'], im_b['h'])
 
 
-def make_gx_filter():
+def make_gy_filter():
     gx_filter = process_image.make_image(3, 3, 1)
     gx_filter['data'] = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
     return gx_filter
 
 
-def make_gy_filter():
+def make_gx_filter():
     gy_filter = process_image.make_image(3, 3, 1)
     gy_filter['data'] = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
     return gy_filter
 
 
 def feature_normalize(im):
-    if im['c'] > 1:
-        sml_r, sml_g, sml_b = float('inf'), float('inf'), float('inf')
-        max_r, max_g, max_b = float('-inf'), float('-inf'), float('-inf')
-        for y in range(im['h']):
-            for x in range(im['w']):
-                r_val = process_image.get_pixel(im, x, y, 0)
-                g_val = process_image.get_pixel(im, x, y, 1)
-                b_val = process_image.get_pixel(im, x, y, 2)
-                sml_r = min(sml_r, r_val)
-                sml_g = min(sml_g, g_val)
-                sml_b = min(sml_b, b_val)
-                max_r = max(max_r, r_val)
-                max_g = max(max_g, g_val)
-                max_b = max(max_b, b_val)
-        range_r = max_r - sml_r
-        range_g = max_g - sml_g
-        range_b = max_b - sml_b
-        if range_r == 0 or range_g == 0 or range_b == 0:
-            for y in range(im['h']):
-                for x in range(im['w']):
-                    process_image.set_pixel(im, x, y, 0, 0)
-        else:
-            for y in range(im['h']):
-                for x in range(im['w']):
-                    r_val = process_image.get_pixel(im, x, y, 0)
-                    g_val = process_image.get_pixel(im, x, y, 1)
-                    b_val = process_image.get_pixel(im, x, y, 2)
-                    r_normalize = (r_val - sml_r) / (max_r - sml_r)
-                    g_normalize = (g_val - sml_g) / (max_g - sml_g)
-                    b_normalize = (b_val - sml_b) / (max_b - sml_b)
-                    process_image.set_pixel(im, x, y, 0, r_normalize)
-                    process_image.set_pixel(im, x, y, 1, g_normalize)
-                    process_image.set_pixel(im, x, y, 2, b_normalize)
+    data = im['data']
+    channels = im['c']
 
-    else:
-        sml_val = float('inf')
-        max_val = float('-inf')
-        for y in range(im['h']):
-            for x in range(im['w']):
-                curr_val = process_image.get_pixel(im, x, y, 0)
-                sml_val = min(sml_val, curr_val)
-                max_val = max(max_val, curr_val)
-        range_ = max_val - sml_val
-        if range_ == 0:
-            for y in range(im['h']):
-                for x in range(im['w']):
-                    process_image.set_pixel(im, x, y, 0, 0)
+    if channels == 1:
+        # For single-channel images
+        min_val = np.min(data)
+        max_val = np.max(data)
+        range_val = max_val - min_val
+
+        if range_val > 0:
+            im['data'] = (data - min_val) / range_val
         else:
-            for y in range(im['h']):
-                for x in range(im['w']):
-                    curr_val = process_image.get_pixel(im, x, y, 0)
-                    val_normalize = (curr_val - sml_val) / (max_val - sml_val)
-                    process_image.set_pixel(im, x, y, 0, val_normalize)
+            im['data'] = np.zeros(data.shape, dtype=data.dtype)
+    else:
+        # For multi-channel images, process each channel independently
+        for i in range(channels):
+            min_val = np.min(data[..., i])
+            max_val = np.max(data[..., i])
+            range_val = max_val - min_val
+
+            if range_val > 0:
+                data[..., i] = (data[..., i] - min_val) / range_val
+            else:
+                data[..., i] = np.zeros(data[..., i].shape, dtype=data.dtype)
 
 
 def sobel_image(im):
@@ -305,8 +243,3 @@ def sobel_image(im):
             dir_val = math.atan2(gy_val, gx_val)
             process_image.set_pixel(gradient_direction, x, y, 0, dir_val)
     return [gradient_magnitude, gradient_direction]
-
-
-def colorize_sobel(im):
-    # TODO
-    return
