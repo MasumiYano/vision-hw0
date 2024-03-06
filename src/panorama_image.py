@@ -32,18 +32,30 @@ def both_images(a, b):
 
 
 def draw_matches(a, b, matches, n, inliers):
-    # Draws lines between matching pixels in two images
     both = both_images(a, b)
-    for i in range(n):
-        bx, by = matches[i]['p']['x'], matches[i]['p']['y']
-        ex, ey = matches[i]['q']['x'] + a['w'], matches[i]['q']['y']
-        color = (0, 1, 0) if i < inliers else (1, 0, 0)  # Green for inliers, Red for outliers
-        for j in range(int(bx), int(ex + 1)):
-            r = int((float(j - bx) / (ex - bx)) * (ey - by) + by)
-            if 0 <= r < both['h']:
-                process_image.set_pixel(both, j, r, 0, color[0])
-                process_image.set_pixel(both, j, r, 1, color[1])
-                process_image.set_pixel(both, j, r, 2, color[2])
+
+    for i, match in enumerate(matches):
+        # Extract 'p' and 'q' directly from the match dictionary
+        bx, by = match['p']  # Coordinates from image a
+        ex, ey = match['q']  # Coordinates from image b
+        ex += a['w']  # Adjust 'ex' for the combined width of images a and b
+
+        # Decide color based on whether the match is an inlier or not
+        color = (0, 255, 0) if i < inliers else (255, 0, 0)  # Green for inliers, red for others
+
+        # Drawing the line from (bx, by) to (ex, ey)
+        dx, dy = ex - bx, ey - by
+        steps = max(abs(dx), abs(dy))
+
+        for step in range(steps + 1):
+            t = step / steps
+            x = int(bx + dx * t)
+            y = int(by + dy * t)
+            if 0 <= x < both['w'] and 0 <= y < both['h']:
+                process_image.set_pixel(both, x, y, 0, color[0])
+                process_image.set_pixel(both, x, y, 1, color[1])
+                process_image.set_pixel(both, x, y, 2, color[2])
+
     return both
 
 
@@ -53,9 +65,10 @@ def draw_inliers(a, b, H, matches, n, thresh):
 
 
 def find_and_draw_matches(a, b, sigma, thresh, nms):
-    ad = harris_image.harris_corner_detector(a, sigma, thresh, nms)
-    bd = harris_image.harris_corner_detector(b, sigma, thresh, nms)
-    matches = match_descriptors(ad, bd)
+    ad, an = harris_image.harris_corner_detector(a, sigma, thresh, nms)
+    bd, bn = harris_image.harris_corner_detector(b, sigma, thresh, nms)
+    matches = match_descriptors(ad, an, bd, bn)
+    print(matches)
     lines = draw_matches(a, b, matches, len(matches), 0)
     return lines
 
@@ -67,43 +80,41 @@ def l1_distance(a, b, n):
 
 
 def match_descriptors(a, an, b, bn):
-    """
-    Finds best matches between descriptors of two images.
-
-    Parameters:
-    a, b: Lists of descriptors for pixels in two images.
-    an, bn: Number of descriptors in arrays a and b.
-
-    Returns:
-    matches: List of best matches found. Each descriptor in a should match with at most
-             one other descriptor in b.
-    """
     matches = []
     seen = np.zeros(bn, dtype=int)  # Tracks which descriptors in b have been matched
 
     for j in range(an):
-        bind = 0  # Placeholder for finding the best match
-        # Placeholder logic to find best match:
-        # You will compare descriptor a[j] with each descriptor in b to find the best match
-        # and calculate the L1 distance for the actual matching logic.
+        descriptor_a = a[j]['data']
+        bind = 0
+        q = float('inf')
+        for k in range(bn):
+            descriptor_b = b[k]['data']
+            distance = l1_distance(descriptor_a, descriptor_b, len(descriptor_a))
+            if distance < q:
+                q = distance
+                bind = k
         match = {
             'ai': j,
             'bi': bind,
-            'p': a[j]['p'],  # Assuming each descriptor has a 'p' key for its point
-            'q': b[bind]['p'],  # Same assumption for b
-            'distance': 0  # Placeholder for the distance calculation
+            'p': (a[j]['x'], a[j]['y']),
+            'q': (b[bind]['x'], b[bind]['y']),
+            'distance': q
         }
         matches.append(match)
 
-    # Placeholder for sorting matches based on distance and ensuring injectivity (one-to-one matches)
-    # You might use the sorted() function with a custom key, or implement any sorting algorithm
-    # Then iterate through sorted matches to eliminate duplicates as described in the C function
+    sorted_matches = sorted(matches, key=lambda x: list(x.values())[-1])
+    best_match = []
 
-    # Update the matches list based on injectivity and sorting criteria
-    # Assume we've done that and filtered out the matches, update mn accordingly
-    mn = len(matches)  # Update this based on actual good matches after filtering
+    for match in sorted_matches:
+        if not seen[match['bi']]:
+            seen[match['bi']] = 1
+            best_match.append(match)
+        else:
+            continue
 
-    return matches, mn
+    mn = len(best_match)  # Update this based on actual good matches after filtering
+
+    return best_match, mn
 
 
 # Apply a projective transformation to a point

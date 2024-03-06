@@ -108,10 +108,10 @@ def harris_corner_detector(im, sigma, thresh, nms):
             if pixel_value > 0:
                 descriptor = describe_index(im, x, y)
                 descriptors.append(descriptor)
-    return descriptors
+    return descriptors, n
 
 
 # Find and draw corners on an image.
 def detect_and_draw_corners(im, sigma, thresh, nms):
-    descriptors = harris_corner_detector(im, sigma, thresh, nms)
+    descriptors, number_of_corners = harris_corner_detector(im, sigma, thresh, nms)
     mark_corners(im, descriptors)
