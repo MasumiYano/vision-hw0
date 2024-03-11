@@ -92,7 +92,7 @@ def harris_corner_detector(im, sigma, thresh, nms):
     R = cornerness_response(S)
     Rnms = nms_image(R, nms)
     count = 0
-    thresh = min(200, thresh * 4)
+    thresh = min(230, thresh * 5)
     for y in range(Rnms['h']):
         for x in range(Rnms['w']):
             pixel_value = process_image.get_pixel(Rnms, x, y, 0)

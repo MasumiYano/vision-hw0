@@ -36,20 +36,20 @@ def bilinear_interpolate(im, x: float, y: float, c: list[int]):
     dist_btm = 1 - dist_top
 
     # Calculating q1
-    r1 = (dist_btm * process_image.get_pixel(im, math.floor(x), math.floor(y), c[0])) + (
-            dist_top * process_image.get_pixel(im, math.floor(x), math.ceil(y), c[0]))
-    g1 = (dist_btm * process_image.get_pixel(im, math.floor(x), math.floor(y), c[1])) + (
-            dist_top * process_image.get_pixel(im, math.floor(x), math.ceil(y), c[1]))
-    b1 = (dist_btm * process_image.get_pixel(im, math.floor(x), math.floor(y), c[2])) + (
-            dist_top * process_image.get_pixel(im, math.floor(x), math.ceil(y), c[2]))
+    r1 = (dist_btm * process_image.get_pixel(im, math.floor(x), math.floor(y), 0)) + (
+            dist_top * process_image.get_pixel(im, math.floor(x), math.ceil(y), 0))
+    g1 = (dist_btm * process_image.get_pixel(im, math.floor(x), math.floor(y), 1)) + (
+            dist_top * process_image.get_pixel(im, math.floor(x), math.ceil(y), 1))
+    b1 = (dist_btm * process_image.get_pixel(im, math.floor(x), math.floor(y), 2)) + (
+            dist_top * process_image.get_pixel(im, math.floor(x), math.ceil(y), 2))
 
     # Calculating q2
-    r2 = (dist_btm * process_image.get_pixel(im, math.ceil(x), math.floor(y), c[0])) + (
-            dist_top * process_image.get_pixel(im, math.ceil(x), math.ceil(y), c[0]))
-    g2 = (dist_btm * process_image.get_pixel(im, math.ceil(x), math.floor(y), c[1])) + (
-            dist_top * process_image.get_pixel(im, math.ceil(x), math.ceil(y), c[1]))
-    b2 = (dist_btm * process_image.get_pixel(im, math.ceil(x), math.floor(y), c[2])) + (
-            dist_top * process_image.get_pixel(im, math.ceil(x), math.ceil(y), c[2]))
+    r2 = (dist_btm * process_image.get_pixel(im, math.ceil(x), math.floor(y), 0)) + (
+            dist_top * process_image.get_pixel(im, math.ceil(x), math.ceil(y), 0))
+    g2 = (dist_btm * process_image.get_pixel(im, math.ceil(x), math.floor(y), 1)) + (
+            dist_top * process_image.get_pixel(im, math.ceil(x), math.ceil(y), 1))
+    b2 = (dist_btm * process_image.get_pixel(im, math.ceil(x), math.floor(y), 2)) + (
+            dist_top * process_image.get_pixel(im, math.ceil(x), math.ceil(y), 2))
 
     # Calculating q
     r = (dist_r * r1) + (dist_l * r2)

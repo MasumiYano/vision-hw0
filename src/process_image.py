@@ -13,8 +13,8 @@ def get_pixel(im, x, y, c):
 
 def set_pixel(im, x, y, c, v):
     height, width = im['h'], im['w']
-    select_x = max(0, min(x, width - 1))
-    select_y = max(0, min(y, height - 1))
+    select_x = int(max(0, min(x, width - 1)))
+    select_y = int(max(0, min(y, height - 1)))
     if im['c'] == 1:
         im['data'][select_y, select_x] = v
     else:
