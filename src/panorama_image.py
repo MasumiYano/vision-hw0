@@ -3,9 +3,10 @@ import numpy as np
 import math
 
 from src import process_image, matrix, harris_image, image_util, resize_image
+from typing import Callable
 
 
-def match_compare(a, b):
+def match_compare(a: dict, b: dict) -> int:
     # Comparator for matches based on distance
     if a['distance'] < b['distance']:
         return -1
@@ -15,25 +16,24 @@ def match_compare(a, b):
         return 0
 
 
-def make_point(x, y):
-    # Helper function to create 2D points
+def make_point(x, y) -> dict:
     return {'x': x, 'y': y}
 
 
-def both_images(a, b):
+def both_images(a: dict, b: dict) -> dict:
     # Place two images side by side on canvas for drawing matching pixels
-    h = max(a['h'], b['h'])
-    w = a['w'] + b['w']
-    c = max(a['c'], b['c'])
-    both = process_image.make_image(w, h, c)
+    h: int = max(a['h'], b['h'])
+    w: int = a['w'] + b['w']
+    c: int = max(a['c'], b['c'])
+    both: dict = process_image.make_image(w, h, c)
     both['data'][:a['h'], :a['w'], :a['c']] = a['data']
     both['data'][:b['h'], a['w']:a['w'] + b['w'], :b['c']] = b['data']
     return both
 
 
-def draw_matches(a, b, matches, n, inliers):
-    both = both_images(a, b)
-    counter = 0  # To keep track of the current match index
+def draw_matches(a: dict, b: dict, matches: list, n, inliers) -> dict:
+    both: dict = both_images(a, b)
+    counter: int = 0  # To keep track of the current match index
 
     for match in matches:
         bx, by = match['p']  # Coordinates from image a
@@ -44,12 +44,12 @@ def draw_matches(a, b, matches, n, inliers):
         # color = (0, 255, 0) if counter < inliers else (255, 0, 0)
 
         dx, dy = ex - bx, ey - by
-        steps = max(abs(dx), abs(dy))
+        steps: float | int = max(abs(dx), abs(dy))
 
         for step in range(steps + 1):
-            t = step / steps
-            x = int(bx + dx * t)
-            y = int(by + dy * t)
+            t: float | int = step / steps
+            x: int = int(bx + dx * t)
+            y: int = int(by + dy * t)
             if 0 <= x < both['w'] and 0 <= y < both['h']:
                 process_image.set_pixel(both, x, y, 0, 255)
                 process_image.set_pixel(both, x, y, 1, 0)
@@ -60,26 +60,26 @@ def draw_matches(a, b, matches, n, inliers):
     return both
 
 
-def draw_inliers(a, b, H, matches, n, thresh):
+def draw_inliers(a: dict, b: dict, H: dict, matches: list, n: int, thresh: int) -> dict:
     count, inliers = model_inliers(H, matches, n, thresh)
     return draw_matches(a, b, matches, n, inliers)
 
 
-def find_and_draw_matches(a, b, sigma, thresh, nms):
+def find_and_draw_matches(a: dict, b: dict, sigma: float | int, thresh: int, nms: int) -> dict:
     ad, an = harris_image.harris_corner_detector(a, sigma, thresh, nms)
     bd, bn = harris_image.harris_corner_detector(b, sigma, thresh, nms)
     matches, mn = match_descriptors(ad, an, bd, bn)
-    lines = draw_matches(a, b, matches, mn, 0)
+    lines: dict = draw_matches(a, b, matches, mn, 0)
     return lines
 
 
 # Calculates L1 distance between to floating point arrays
-def l1_distance(a, b, n):
+def l1_distance(a: dict, b: dict, n: int) -> float | int:
     # Implement the L1 distance calculation
     return sum(abs(a[i] - b[i]) for i in range(n))
 
 
-def match_descriptors(a, an, b, bn):
+def match_descriptors(a: dict, an: int, b, bn):
     matches = []
     seen = np.zeros(bn, dtype=int)  # Tracks which descriptors in b have been matched
 
@@ -124,10 +124,7 @@ def project_point(H, p):
     elif isinstance(p, tuple):
         x, y = p
 
-    c = matrix.make_matrix(3, 1)
-    c[0, 0] = x
-    c[1, 0] = y
-    c[2, 0] = 1
+    c = np.array([[x], [y], [1]])
     multiplied = matrix.matrix_mult_matrix(H, c)
     x_prime = multiplied[0, 0] / multiplied[2, 0]
     y_prime = multiplied[1, 0] / multiplied[2, 0]
@@ -263,21 +260,19 @@ def combine_images(a_img, b_img, H):
 
 # Create a panorama between two images
 def panorama_image(a, b, thresh, sigma=2, nms=3, inlier_thresh=3, iters=25000, cutoff=60):
-    a_copy = process_image.copy_image(a)
-    b_copy = process_image.copy_image(b)
-    ad, an = harris_image.harris_corner_detector(a_copy, sigma, thresh, nms)
-    bd, bn = harris_image.harris_corner_detector(b_copy, sigma, thresh, nms)
+    ad, an = harris_image.harris_corner_detector(a, sigma, thresh, nms)
+    bd, bn = harris_image.harris_corner_detector(b, sigma, thresh, nms)
 
     matches, mn = match_descriptors(ad, an, bd, bn)
     H = RANSAC(matches, mn, inlier_thresh, iters, cutoff)
 
     if False:  # Turn it off if you don't wanna make inliners image.
-        harris_image.mark_corners(a_copy, ad)
-        harris_image.mark_corners(b_copy, bd)
-        inlier_match = draw_inliers(a_copy, b_copy, H, matches, mn, inlier_thresh)
+        harris_image.mark_corners(a, ad)
+        harris_image.mark_corners(b, bd)
+        inlier_match = draw_inliers(a, b, H, matches, mn, inlier_thresh)
         image_util.save_image(inlier_match, "inliners")
 
-    combined_image = combine_images(a_copy, b_copy, H)
+    combined_image = combine_images(a, b, H)
 
     return combined_image
 

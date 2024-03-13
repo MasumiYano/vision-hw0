@@ -1,19 +1,18 @@
 import numpy as np
 from PIL import Image
-import os
 
 
-def make_empty_image(w, h, c):
+def make_empty_image(w: int, h: int, c: int) -> dict:
     return {'data': np.zeros((h, w, c), dtype=np.float32), 'h': h, 'w': w, 'c': c}
 
 
-def make_image(w, h, c):
+def make_image(w: int, h: int, c: int) -> dict:
     image = make_empty_image(w, h, c)
     image['data'] = np.zeros((h, w, c), dtype=np.float32)
     return image
 
 
-def save_image_stb(im, name):
+def save_image_stb(im: dict, name: str) -> None:
     buff = f"created_data/{name}.jpg"
     data = np.clip(im['data'] * 255.0, 0, 255).astype(np.uint8)
     img = Image.fromarray(data)
@@ -21,11 +20,11 @@ def save_image_stb(im, name):
     print(f"Image saved to {buff}")
 
 
-def save_image(im, name):
+def save_image(im: dict, name: str) -> None:
     save_image_stb(im, name)
 
 
-def load_image_stb(filename, channels=0):
+def load_image_stb(filename: str, channels=0) -> dict:
     img = Image.open(filename)
     if channels:
         if channels == 1:
@@ -46,9 +45,5 @@ def load_image_stb(filename, channels=0):
     return {'data': data, 'w': w, 'h': h, 'c': c}
 
 
-def load_image(filename):
+def load_image(filename: str) -> dict:
     return load_image_stb(filename, 0)
-
-
-def free_image(im):
-    del im['data']
