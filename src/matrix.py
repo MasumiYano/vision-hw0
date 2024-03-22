@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import scipy.linalg
 from numpy.typing import NDArray
@@ -43,6 +45,10 @@ def matrix_sub_matrix(a: NDArray, b: NDArray) -> NDArray:
     return np.subtract(a, b)
 
 
+def axpy_matrix(a: float, x: np.ndarray, y: np.ndarray) -> NDArray:
+    return a * x + y
+
+
 def transpose_matrix(m: NDArray) -> NDArray:
     return np.transpose(m)
 
@@ -51,7 +57,7 @@ def scale_matrix(m: NDArray, s: int) -> None:
     m *= s
 
 
-def matrix_mult_vector(m:NDArray , v: NDArray) -> NDArray:
+def matrix_mult_vector(m: NDArray, v: NDArray) -> NDArray:
     return np.dot(m, v)
 
 
@@ -73,8 +79,12 @@ def in_place_LUP(m):
     return L, U, P
 
 
-def random_matrix(rows: int, cols: int) -> NDArray:
-    return np.random.rand(rows, cols) * 100 - 50
+def random_matrix(rows: int, cols: int, s: float) -> NDArray:
+    m: NDArray = make_matrix(rows, cols)
+    for row in range(rows):
+        for col in range(cols):
+            m[row, col] = 2 * s * random.random() - s
+    return m
 
 
 def sle_solve(A: NDArray, b: NDArray) -> NDArray:

@@ -67,7 +67,6 @@ def box_filter_image(im: dict, s: int) -> dict:
 
 
 def time_structure_matrix(im: dict, prev: dict, s: int) -> dict:
-    # Assuming im['data'] and prev['data'] are already grayscale images
     Ix, Iy = np.gradient(im['data'][:, :, 0])
     It = im['data'][:, :, 0] - prev['data'][:, :, 0]
 

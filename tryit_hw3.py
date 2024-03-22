@@ -8,5 +8,5 @@ from src import image_util, flow_image, flow_image_fast
 # flow_image.draw_flow(a, flow, 8)
 # image_util.save_image(a, "lines")
 
-flow_image_fast.optical_flow_webcam(15, 4, 8)
+flow_image_fast.optical_flow_webcam(15, 4, 12)
 # flow_image.optical_flow_webcam(15, 4, 8)
