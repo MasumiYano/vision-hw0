@@ -13,3 +13,10 @@ ehthumbs.db
 Icon?
 Thumbs.db
 *.swp
+data
+test
+train
+*.test
+*.labels
+*.train
+*.gz
